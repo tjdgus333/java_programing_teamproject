@@ -1,3 +1,6 @@
+
+//아직 제작중입니다
+
 package snake;
 
 import java.awt.Color;
@@ -14,8 +17,8 @@ import javax.swing.JPanel;
 class Player {
     private int x_direction;//x축 현재 방향
     private int y_direction;//y축 현재 방향
-    private int position_x;
-    private int position_y;
+    private int position_x;//x위치
+    private int position_y;//y위치
 
     public Player() {
         this.position_x = 50;
@@ -84,7 +87,7 @@ class inital_move extends Thread{
 }
 class game extends JPanel {
     public Player playerobj;
-    private boolean Start_screen;
+    private boolean Start_screen;//시작 화면인지 확인
 
 
     game() {
@@ -108,7 +111,6 @@ class game extends JPanel {
         @Override
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
-            //System.out.println("Key pressed");
             if (key == KeyEvent.VK_LEFT) {
             	playerobj.x_change_direction(1);
             	playerobj.y_change_direction(0);
@@ -162,6 +164,7 @@ public class snake{
     }
 
     static void init() {
+    	//기초 설정
         JFrame frame = new JFrame("Snake Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
