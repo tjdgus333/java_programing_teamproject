@@ -72,24 +72,24 @@ class inital_move extends Thread{
 	}
 	public void run(){
 		try{
-			while(true){
+			//while(true){
 				
 				if(this.p[0].get_x_direction() == 2) {
-					this.p[0].move_x(1);
+					this.p[0].move_x(30);
 				}
 				else if(this.p[0].get_x_direction() == 1){
-					this.p[0].move_x(-1);
+					this.p[0].move_x(-30);
 				}
 				
 				else if(this.p[0].get_y_direction() == 2) {
-					this.p[0].move_y(1);
+					this.p[0].move_y(30);
 
 				}
 				else if(this.p[0].get_y_direction() == 1){
-					this.p[0].move_y(-1);
+					this.p[0].move_y(-30);
 				}
-				Thread.sleep(10000);
-			}
+				Thread.sleep(10000);			
+			//}
 		}
 		catch(InterruptedException e){
 			
@@ -172,7 +172,15 @@ class game extends JPanel {
 			for(int i=0;i<eaten;i++) {
 				g.fillRect(playerobj[i].get_x(), playerobj[i].get_y(), 30, 30);
 			}
-    		
+			try {	
+		        
+				Thread.sleep(50);
+	            
+			} catch (InterruptedException e) {
+	        
+				System.out.println("error");
+	            
+			}
     	}
 
     }
