@@ -1,6 +1,3 @@
-
-//특정방향에서 먹이와의 충돌계산이 실패하거나 이상한데서 먹어짐
-
 package snake;
 
 import java.awt.Color;
