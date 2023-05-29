@@ -218,10 +218,10 @@ class game extends JPanel {
 			for(int i=0;i<eaten;i++) {
 				g.fillRect(playerobj[i].get_x(), playerobj[i].get_y(), 30, 30);
 			}
-			g.fillOval(food.get_x(), food.get_x(),30,30);
+			g.fillOval(food.get_x(), food.get_y(),30,30);
 			
 			try {
-				Thread.sleep(30);
+				Thread.sleep(50);
 	            
 			} catch (InterruptedException e) {
 	        
