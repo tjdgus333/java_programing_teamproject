@@ -20,11 +20,11 @@ class Player {
     private int position_x;//x위치
     private int position_y;//y위치
 
-    public Player() {
-        this.position_x = 50;
-        this.position_y = 50;
-    	x_direction = 0;
-    	y_direction = 0;
+    public Player(int x,int y) {
+        this.position_x = x;
+        this.position_y = y;
+    	x_direction = 2;
+    	y_direction = 2;
     }
 
     public int get_x() {
@@ -33,6 +33,13 @@ class Player {
 
     public int get_y() {
         return this.position_y ;
+    }
+    public void set_x(int position) {
+        this.position_x = position;
+    }
+
+    public void set_y(int position) {
+        this.position_y = position;
     }
 
     public void move_x(int num) {
@@ -57,28 +64,32 @@ class Player {
     
 }
 class inital_move extends Thread{
-	private Player p;
-	inital_move(Player p){
+	private Player[] p;
+	int eaten;
+	inital_move(Player[] p,int eaten){
 		this.p = p;
+		this.eaten = eaten;
 	}
 	public void run(){
 		try{
 			while(true){
-				if(this.p.get_x_direction() == 2) {
-					this.p.move_x(1);
+				
+				if(this.p[0].get_x_direction() == 2) {
+					this.p[0].move_x(1);
 				}
-				else if(this.p.get_x_direction() == 1){
-					this.p.move_x(-1);
+				else if(this.p[0].get_x_direction() == 1){
+					this.p[0].move_x(-1);
 				}
 				
-				else if(this.p.get_y_direction() == 2) {
-					this.p.move_y(1);
+				else if(this.p[0].get_y_direction() == 2) {
+					this.p[0].move_y(1);
+
 				}
-				else if(this.p.get_y_direction() == 1){
-					this.p.move_y(-1);
+				else if(this.p[0].get_y_direction() == 1){
+					this.p[0].move_y(-1);
 				}
 				Thread.sleep(10000);
-				}
+			}
 		}
 		catch(InterruptedException e){
 			
@@ -86,9 +97,9 @@ class inital_move extends Thread{
 	}
 }
 class game extends JPanel {
-    public Player playerobj;
+    public Player[] playerobj;
     private boolean Start_screen;//시작 화면인지 확인
-
+    public int eaten;
 
     game() {
     	Start_screen = true;
@@ -98,7 +109,11 @@ class game extends JPanel {
         setBackground(new Color(255, 255, 255));
         setFocusable(true);
         addKeyListener(new KeyInput());
-        playerobj = new Player();
+        playerobj = new Player[30];
+        for(int i=0;i<30;i++) {
+        	playerobj[i] = new Player(350-30*i,350);
+        }
+        eaten = 10;
     }
     @Override
     protected void paintComponent(Graphics g) {
@@ -112,20 +127,20 @@ class game extends JPanel {
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
             if (key == KeyEvent.VK_LEFT) {
-            	playerobj.x_change_direction(1);
-            	playerobj.y_change_direction(0);
+            	playerobj[0].x_change_direction(1);
+            	playerobj[0].y_change_direction(0);
             }
             if (key == KeyEvent.VK_RIGHT) {
-            	playerobj.x_change_direction(2);
-            	playerobj.y_change_direction(0);
+            	playerobj[0].x_change_direction(2);
+            	playerobj[0].y_change_direction(0);
             }
             if (key == KeyEvent.VK_UP) {
-            	playerobj.y_change_direction(1);
-            	playerobj.x_change_direction(0);
+            	playerobj[0].y_change_direction(1);
+            	playerobj[0].x_change_direction(0);
             }
             if (key == KeyEvent.VK_DOWN) {
-            	playerobj.y_change_direction(2);
-            	playerobj.x_change_direction(0);
+            	playerobj[0].y_change_direction(2);
+            	playerobj[0].x_change_direction(0);
             }
             if (key == KeyEvent.VK_ENTER) {
             	Start_screen = false;
@@ -146,10 +161,17 @@ class game extends JPanel {
     	}
     	//게임 진행중
     	else {
-            Thread R1 =new Thread(new inital_move(playerobj));
+            Thread R1 =new Thread(new inital_move(playerobj,eaten));
             R1.start();
 			repaint();
-    		g.fillRect(playerobj.get_x(), playerobj.get_y(), 30, 30);
+			for(int i=this.eaten;i>0;i--) {
+				playerobj[i].set_x(playerobj[i-1].get_x());
+				playerobj[i].set_y(playerobj[i-1].get_y());
+
+			}
+			for(int i=0;i<eaten;i++) {
+				g.fillRect(playerobj[i].get_x(), playerobj[i].get_y(), 30, 30);
+			}
     		
     	}
 
