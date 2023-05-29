@@ -1,5 +1,5 @@
 
-//아직 제작중입니다
+//특정방향에서 먹이와의 충돌계산이 실패하거나 이상한데서 먹어짐
 
 package snake;
 
@@ -206,6 +206,9 @@ class game extends JPanel {
 			//충돌확인
 			if(collision_food(food,playerobj[0])==true){
 				eaten += 1;
+				if(eaten>30) {
+					eaten = 30;//최대점수
+				}
 				food.set_foodsetting();
 			}
         	if(food.get_foodsetting() == false) {
