@@ -24,7 +24,7 @@ class Player {
         this.position_x = x;
         this.position_y = y;
     	x_direction = 2;
-    	y_direction = 2;
+    	y_direction = 0;
     }
 
     public int get_x() {
@@ -126,19 +126,19 @@ class game extends JPanel {
         @Override
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
-            if (key == KeyEvent.VK_LEFT) {
+            if (key == KeyEvent.VK_LEFT&&playerobj[0].get_x_direction() != 2) {
             	playerobj[0].x_change_direction(1);
             	playerobj[0].y_change_direction(0);
             }
-            if (key == KeyEvent.VK_RIGHT) {
+            if (key == KeyEvent.VK_RIGHT&&playerobj[0].get_x_direction() != 1) {
             	playerobj[0].x_change_direction(2);
             	playerobj[0].y_change_direction(0);
             }
-            if (key == KeyEvent.VK_UP) {
+            if (key == KeyEvent.VK_UP&&playerobj[0].get_y_direction() != 2) {
             	playerobj[0].y_change_direction(1);
             	playerobj[0].x_change_direction(0);
             }
-            if (key == KeyEvent.VK_DOWN) {
+            if (key == KeyEvent.VK_DOWN&&playerobj[0].get_y_direction() != 1) {
             	playerobj[0].y_change_direction(2);
             	playerobj[0].x_change_direction(0);
             }
