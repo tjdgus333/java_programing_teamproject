@@ -226,9 +226,9 @@ class game extends JPanel {
         System.out.println("X : " + playerobj.get(1).get_x() + " Y : " + playerobj.get(1).get_y());
         System.out.println("X : " + playerobj.get(2).get_x() + " Y : " + playerobj.get(2).get_y());
         boolean boundaryCheck = head.get_x() < 0 ||
-                head.get_x() > (SIZE * snake.WIDTH) ||
+                head.get_x() > (SIZE * snake.WIDTH - SIZE) ||
                 head.get_y() < 0 ||
-                head.get_y() > (SIZE * snake.HEIGHT);
+                head.get_y() > (SIZE * snake.HEIGHT - SIZE);
         boolean ateItself = false;
         for (Player p : playerobj.subList(1, eaten)) {
             if (head.get_x() == p.get_x() && head.get_y() == p.get_y()) {
