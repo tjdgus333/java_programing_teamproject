@@ -195,20 +195,19 @@ class game extends JPanel {
             g.drawRect(0,0,snake.WIDTH * SIZE, snake.HEIGHT * SIZE);
 
             g.setColor(Color.BLUE);
-            for (int i = 0; i < eaten; i++) {
-                g.fillRect(playerobj.get(i).get_x(), playerobj.get(i).get_y(), SIZE, SIZE);
+            for(Player p: playerobj) {
+                g.fillRect(p.get_x(), p.get_y(), SIZE, SIZE);
             }
 
             g.setColor(Color.RED);
             g.fillOval(food.get_x(), food.get_y(), SIZE, SIZE);
 
             try {
-                Thread.sleep(75);
-
+                Thread.sleep(100);
+                checkGameOver();
             } catch (InterruptedException e) {
                 System.out.println("error");
             }
-            checkGameOver();
         }
         else if(state == GameStatus.GAME_OVER) {
             g.drawString("GAME OVER", 225, 200);
