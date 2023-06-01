@@ -4,17 +4,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.*;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static snake.snake.*;
+import static snake.Snake.*;
 
 enum GameStatus {
     NOT_STARTED, RUNNING, GAME_OVER
 }
 
 //snake 본체
-class Player {
+class Player implements Serializable {
     private int x_direction;//x축 현재 방향
     private int y_direction;//y축 현재 방향
     private int position_x;//x위치
@@ -69,21 +71,21 @@ class Player {
 
 }
 
-class Food {
-    int x_p = 0;
-    int y_p = 0;
-    boolean foodsetting;
+class Food implements Serializable {
+    private int x_p = 0;
+    private int y_p = 0;
+    private boolean foodsetting;
 
-    Food() {
+    public Food() {
         foodsetting = false;
     }
 
-    public void set_food(Graphics g) {
+    public void set_food() {
         Random random = new Random();
         int rand_pos;
-        rand_pos = random.nextInt(snake.WIDTH) * SIZE;
+        rand_pos = random.nextInt(Snake.WIDTH) * SIZE;
         this.x_p = rand_pos;
-        rand_pos = random.nextInt(snake.HEIGHT) * SIZE;
+        rand_pos = random.nextInt(Snake.HEIGHT) * SIZE;
         this.y_p = rand_pos;
         this.foodsetting = true;
     }
@@ -106,12 +108,12 @@ class Food {
 }
 
 class initial_move extends Thread {
-    int eaten;
+    //private int eaten;
     private final ArrayList<Player> p;
 
-    initial_move(ArrayList<Player> p, int eaten) {
+    initial_move(ArrayList<Player> p/*, int eaten*/) {
         this.p = p;
-        this.eaten = eaten;
+        //this.eaten = eaten;
     }
 
     public void run() {
@@ -128,11 +130,11 @@ class initial_move extends Thread {
 }
 
 class game extends JPanel {
-    //public Player[] playerobj;
-    public ArrayList<Player> playerobj;
-    public int eaten;
-    Food food;
+    private ArrayList<Player> playerobj;
+    private int eaten;
+    private Food food;
     private GameStatus state;//시작 화면인지 확인
+    private final Socket socket;
 
     game() {
         state = GameStatus.NOT_STARTED;
@@ -142,20 +144,87 @@ class game extends JPanel {
         setFocusable(true);
         addKeyListener(new KeyInput());
         playerobj = new ArrayList<Player>();
-        for(int i = 0; i < 4; i++){
-            playerobj.add(new Player((snake.WIDTH * SIZE) / 2 - SIZE * i, (snake.HEIGHT * SIZE) / 2));
+        for (int i = 0; i < 4; i++) {
+            playerobj.add(new Player((Snake.WIDTH * SIZE) / 2 - SIZE * i, (Snake.HEIGHT * SIZE) / 2));
         }
         eaten = 4;
         food = new Food();
+        try {
+            socket = new Socket("localhost", 5000);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         running(g);
-		Toolkit.getDefaultToolkit().sync();
+        Toolkit.getDefaultToolkit().sync();
         g.setColor(Color.BLACK);
     }
+
+    public byte[] toByteArray(Object obj) {
+        byte[] bytes = null;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(obj);
+            oos.flush();
+            oos.close();
+            bos.close();
+            bytes = bos.toByteArray();
+        } catch (Exception ex) {
+            System.out.println("error");
+        }
+        return bytes;
+    }
+
+//    public <T> T toObject (byte[] bytes, Class<T> type) {
+//        Object obj = null;
+//        try {
+//            ByteArrayInputStream bis = new ByteArrayInputStream (bytes);
+//            ObjectInputStream ois = new ObjectInputStream (bis);
+//            obj = ois.readObject();
+//        }
+//        catch (IOException ex) {
+//            ex.printStackTrace();
+//        }
+//        catch (ClassNotFoundException ex) {
+//            ex.printStackTrace();
+//        }
+//        return type.cast(obj);
+//    }
+
+    private void send() {
+        byte[] playerBytes = toByteArray(playerobj);
+        byte[] foodBytes = toByteArray(food);
+        byte[] eatenBytes = toByteArray(eaten);
+        try {
+            OutputStream os = socket.getOutputStream();
+            os.write(playerBytes);
+            os.flush();
+            os.write(foodBytes);
+            os.flush();
+            os.write(eatenBytes);
+            os.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+//    private void receive() {
+//        byte[] buffer = new byte[1024];
+//        try{
+//            InputStream is = socket.getInputStream();
+//            int nReadSize = is.read(buffer);
+//            if(nReadSize > 0){
+//                receivedPlayer = toObject(buffer, ArrayList.class);
+//            }
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     private void running(Graphics g) {
         //폰트 지정
@@ -168,10 +237,11 @@ class game extends JPanel {
             g.drawString("Press  Enter  to  begin", 150, 400);
         }
         //게임 진행중
-        else if(state == GameStatus.RUNNING){
+        else if (state == GameStatus.RUNNING) {
             g.drawString(Integer.toString(eaten - 4), 10, 30);
-            Thread R1 = new Thread(new initial_move(playerobj, eaten));
+            Thread R1 = new Thread(new initial_move(playerobj/*, eaten*/));
             R1.start();
+            send();
             repaint();
             for (int i = eaten - 1; i > 0; i--) {
                 playerobj.get(i).set_x(playerobj.get(i - 1).get_x());
@@ -182,20 +252,19 @@ class game extends JPanel {
                 eaten++;
                 if (eaten > 30) {
                     eaten = 30;//최대점수
-                }
-                else {
+                } else {
                     playerobj.add(new Player(playerobj.get(eaten - 2).get_x(), playerobj.get(eaten - 2).get_y()));
                 }
                 food.set_foodsetting();
             }
             if (!food.get_foodsetting()) {
-                food.set_food(g);
+                food.set_food();
             }
 
-            g.drawRect(0,0,snake.WIDTH * SIZE, snake.HEIGHT * SIZE);
+            g.drawRect(0, 0, Snake.WIDTH * SIZE, Snake.HEIGHT * SIZE);
 
             g.setColor(Color.BLUE);
-            for(Player p: playerobj) {
+            for (Player p : playerobj) {
                 g.fillRect(p.get_x(), p.get_y(), SIZE, SIZE);
             }
 
@@ -208,10 +277,9 @@ class game extends JPanel {
             } catch (InterruptedException e) {
                 System.out.println("error");
             }
-        }
-        else if(state == GameStatus.GAME_OVER) {
+        } else if (state == GameStatus.GAME_OVER) {
             g.drawString("GAME OVER", 225, 200);
-            g.drawString("Press  Enter  to  Play Again", 150, 400);
+            g.drawString("Press  Enter  to  Play  Again", 150, 400);
         }
     }
 
@@ -221,13 +289,13 @@ class game extends JPanel {
 
     private void checkGameOver() {
         Player head = playerobj.get(0);
-        System.out.println("X : " + playerobj.get(0).get_x() + " Y : " + playerobj.get(0).get_y());
-        System.out.println("X : " + playerobj.get(1).get_x() + " Y : " + playerobj.get(1).get_y());
-        System.out.println("X : " + playerobj.get(2).get_x() + " Y : " + playerobj.get(2).get_y());
+//        System.out.println("X : " + playerobj.get(0).get_x() + " Y : " + playerobj.get(0).get_y());
+//        System.out.println("X : " + playerobj.get(1).get_x() + " Y : " + playerobj.get(1).get_y());
+//        System.out.println("X : " + playerobj.get(2).get_x() + " Y : " + playerobj.get(2).get_y());
         boolean boundaryCheck = head.get_x() < 0 ||
-                head.get_x() > (SIZE * snake.WIDTH - SIZE) ||
+                head.get_x() > (SIZE * Snake.WIDTH - SIZE) ||
                 head.get_y() < 0 ||
-                head.get_y() > (SIZE * snake.HEIGHT - SIZE);
+                head.get_y() > (SIZE * Snake.HEIGHT - SIZE);
         boolean ateItself = false;
         for (Player p : playerobj.subList(1, eaten)) {
             if (head.get_x() == p.get_x() && head.get_y() == p.get_y()) {
@@ -235,7 +303,7 @@ class game extends JPanel {
                 break;
             }
         }
-        System.out.println("boundaryCheck : " + boundaryCheck + " ateItself : " + ateItself);
+//        System.out.println("boundaryCheck : " + boundaryCheck + " ateItself : " + ateItself);
         if (boundaryCheck || ateItself) {
             state = GameStatus.GAME_OVER;
         }
@@ -246,7 +314,7 @@ class game extends JPanel {
         @Override
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
-            if(state == GameStatus.RUNNING) {
+            if (state == GameStatus.RUNNING) {
                 if (key == KeyEvent.VK_LEFT && playerobj.get(0).get_x_direction() != 2) {
                     playerobj.get(0).x_change_direction(1);
                     playerobj.get(0).y_change_direction(0);
@@ -269,8 +337,8 @@ class game extends JPanel {
             }
             if (state == GameStatus.GAME_OVER && key == KeyEvent.VK_ENTER) {
                 playerobj = new ArrayList<Player>();
-                for(int i = 0; i < 4; i++){
-                    playerobj.add(new Player((snake.WIDTH * SIZE) / 2 - SIZE * i, (snake.HEIGHT * SIZE) / 2));
+                for (int i = 0; i < 4; i++) {
+                    playerobj.add(new Player((Snake.WIDTH * SIZE) / 2 - SIZE * i, (Snake.HEIGHT * SIZE) / 2));
                 }
                 eaten = 4;
                 food = new Food();
@@ -282,10 +350,11 @@ class game extends JPanel {
     }
 }
 
-public class snake {
+public class Snake {
     static final int SIZE = 20;
     static final int WIDTH = 30;
     static final int HEIGHT = 30;
+
     public static void main(String[] args) {
         init();
 
@@ -303,7 +372,5 @@ public class snake {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-
-
     }
 }
