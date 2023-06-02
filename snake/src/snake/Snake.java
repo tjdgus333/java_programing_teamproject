@@ -9,24 +9,26 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static snake.Snake.*;
+import static snake.Snake.SIZE;
 
 enum GameStatus {
     NOT_STARTED, RUNNING, GAME_OVER
 }
 
+enum DIRECTION {
+    UP, DOWN, LEFT, RIGHT
+}
+
 //snake 본체
 class Player implements Serializable {
-    private int x_direction;//x축 현재 방향
-    private int y_direction;//y축 현재 방향
     private int position_x;//x위치
     private int position_y;//y위치
+    private DIRECTION direction;
 
     public Player(int x, int y) {
         this.position_x = x;
         this.position_y = y;
-        x_direction = 2;
-        y_direction = 0;
+        this.direction = DIRECTION.RIGHT;
     }
 
     public int get_x() {
@@ -52,23 +54,12 @@ class Player implements Serializable {
     public void move_y(int num) {
         this.position_y += num;
     }
-
-    public int get_x_direction() {
-        return this.x_direction;
+    public DIRECTION get_direction() {
+        return this.direction;
     }
-
-    public int get_y_direction() {
-        return this.y_direction;
+    public void set_direction(DIRECTION direction) {
+        this.direction = direction;
     }
-
-    public void x_change_direction(int a) {
-        this.x_direction = a;
-    }
-
-    public void y_change_direction(int a) {
-        this.y_direction = a;
-    }
-
 }
 
 class Food implements Serializable {
@@ -110,21 +101,31 @@ class Food implements Serializable {
 class initial_move extends Thread {
     //private int eaten;
     private final ArrayList<Player> p;
+    private final DIRECTION direction;
 
-    initial_move(ArrayList<Player> p/*, int eaten*/) {
+    public initial_move(ArrayList<Player> p, DIRECTION direction) {
         this.p = p;
-        //this.eaten = eaten;
+        this.direction = direction;
     }
 
     public void run() {
-        if (this.p.get(0).get_x_direction() == 2) {
-            this.p.get(0).move_x(SIZE);
-        } else if (this.p.get(0).get_x_direction() == 1) {
-            this.p.get(0).move_x(-SIZE);
-        } else if (this.p.get(0).get_y_direction() == 2) {
-            this.p.get(0).move_y(SIZE);
-        } else if (this.p.get(0).get_y_direction() == 1) {
-            this.p.get(0).move_y(-SIZE);
+        switch(direction){
+            case UP -> {
+                this.p.get(0).move_y(-SIZE);
+                break;
+            }
+            case DOWN -> {
+                this.p.get(0).move_y(SIZE);
+                break;
+            }
+            case LEFT -> {
+                this.p.get(0).move_x(-SIZE);
+                break;
+            }
+            case RIGHT -> {
+                this.p.get(0).move_x(SIZE);
+                break;
+            }
         }
     }
 }
@@ -139,7 +140,7 @@ class game extends JPanel {
     game() {
         state = GameStatus.NOT_STARTED;
 
-        setPreferredSize(new Dimension(900, 700));
+        setPreferredSize(new Dimension(600, 600));
         setBackground(new Color(255, 255, 255));
         setFocusable(true);
         addKeyListener(new KeyInput());
@@ -164,85 +165,35 @@ class game extends JPanel {
         g.setColor(Color.BLACK);
     }
 
-    public byte[] toByteArray(Object obj) {
-        byte[] bytes = null;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    private void send(Object obj) {
         try {
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(obj);
-            oos.flush();
-            oos.close();
-            bos.close();
-            bytes = bos.toByteArray();
-        } catch (Exception ex) {
-            System.out.println("error");
-        }
-        return bytes;
-    }
-
-//    public <T> T toObject (byte[] bytes, Class<T> type) {
-//        Object obj = null;
-//        try {
-//            ByteArrayInputStream bis = new ByteArrayInputStream (bytes);
-//            ObjectInputStream ois = new ObjectInputStream (bis);
-//            obj = ois.readObject();
-//        }
-//        catch (IOException ex) {
-//            ex.printStackTrace();
-//        }
-//        catch (ClassNotFoundException ex) {
-//            ex.printStackTrace();
-//        }
-//        return type.cast(obj);
-//    }
-
-    private void send() {
-        byte[] playerBytes = toByteArray(playerobj);
-        byte[] foodBytes = toByteArray(food);
-        byte[] eatenBytes = toByteArray(eaten);
-        try {
-            OutputStream os = socket.getOutputStream();
-            os.write(playerBytes);
-            os.flush();
-            os.write(foodBytes);
-            os.flush();
-            os.write(eatenBytes);
+            ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
+            os.writeObject(obj);
             os.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-//    private void receive() {
-//        byte[] buffer = new byte[1024];
-//        try{
-//            InputStream is = socket.getInputStream();
-//            int nReadSize = is.read(buffer);
-//            if(nReadSize > 0){
-//                receivedPlayer = toObject(buffer, ArrayList.class);
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     private void running(Graphics g) {
         //폰트 지정
         Font font = new Font("Arial", Font.BOLD, 30);
         g.setFont(font);
-
+        send(state);
+        send(playerobj);
+        send(food);
+        send(eaten);
         //시작화면인지 체크
         if (state == GameStatus.NOT_STARTED) {
-            g.drawString("SNAKE GAME", 225, 200);
-            g.drawString("Press  Enter  to  begin", 150, 400);
+            g.drawString("SNAKE GAME", 200, 200);
+            g.drawString("Press  Enter  to  Start  Game.", 80, 400);
         }
         //게임 진행중
         else if (state == GameStatus.RUNNING) {
-            g.drawString(Integer.toString(eaten - 4), 10, 30);
-            Thread R1 = new Thread(new initial_move(playerobj/*, eaten*/));
+            g.drawString("Eaten: " + Integer.toString(eaten - 4), 10, 30);
+            Thread R1 = new Thread(new initial_move(playerobj, playerobj.get(0).get_direction()));
             R1.start();
-            send();
-            repaint();
             for (int i = eaten - 1; i > 0; i--) {
                 playerobj.get(i).set_x(playerobj.get(i - 1).get_x());
                 playerobj.get(i).set_y(playerobj.get(i - 1).get_y());
@@ -267,6 +218,7 @@ class game extends JPanel {
             for (Player p : playerobj) {
                 g.fillRect(p.get_x(), p.get_y(), SIZE, SIZE);
             }
+            System.out.println("Length of snake: " + playerobj.size());
 
             g.setColor(Color.RED);
             g.fillOval(food.get_x(), food.get_y(), SIZE, SIZE);
@@ -274,12 +226,13 @@ class game extends JPanel {
             try {
                 Thread.sleep(100);
                 checkGameOver();
+                repaint();
             } catch (InterruptedException e) {
                 System.out.println("error");
             }
         } else if (state == GameStatus.GAME_OVER) {
-            g.drawString("GAME OVER", 225, 200);
-            g.drawString("Press  Enter  to  Play  Again", 150, 400);
+            g.drawString("GAME OVER", 200, 200);
+            g.drawString("Press  Enter  to  Go  Back  to  Main.", 50, 400);
         }
     }
 
@@ -297,7 +250,7 @@ class game extends JPanel {
                 head.get_y() < 0 ||
                 head.get_y() > (SIZE * Snake.HEIGHT - SIZE);
         boolean ateItself = false;
-        for (Player p : playerobj.subList(1, eaten)) {
+        for (Player p : playerobj.subList(1, eaten - 1)) {
             if (head.get_x() == p.get_x() && head.get_y() == p.get_y()) {
                 ateItself = true;
                 break;
@@ -315,25 +268,22 @@ class game extends JPanel {
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
             if (state == GameStatus.RUNNING) {
-                if (key == KeyEvent.VK_LEFT && playerobj.get(0).get_x_direction() != 2) {
-                    playerobj.get(0).x_change_direction(1);
-                    playerobj.get(0).y_change_direction(0);
+                if (key == KeyEvent.VK_LEFT && playerobj.get(0).get_direction() != DIRECTION.LEFT) {
+                    playerobj.get(0).set_direction(DIRECTION.LEFT);
                 }
-                if (key == KeyEvent.VK_RIGHT && playerobj.get(0).get_x_direction() != 1) {
-                    playerobj.get(0).x_change_direction(2);
-                    playerobj.get(0).y_change_direction(0);
+                if (key == KeyEvent.VK_RIGHT && playerobj.get(0).get_direction() != DIRECTION.RIGHT) {
+                    playerobj.get(0).set_direction(DIRECTION.RIGHT);
                 }
-                if (key == KeyEvent.VK_UP && playerobj.get(0).get_y_direction() != 2) {
-                    playerobj.get(0).y_change_direction(1);
-                    playerobj.get(0).x_change_direction(0);
+                if (key == KeyEvent.VK_UP && playerobj.get(0).get_direction() != DIRECTION.UP) {
+                    playerobj.get(0).set_direction(DIRECTION.UP);
                 }
-                if (key == KeyEvent.VK_DOWN && playerobj.get(0).get_y_direction() != 1) {
-                    playerobj.get(0).y_change_direction(2);
-                    playerobj.get(0).x_change_direction(0);
+                if (key == KeyEvent.VK_DOWN && playerobj.get(0).get_direction() != DIRECTION.DOWN) {
+                    playerobj.get(0).set_direction(DIRECTION.DOWN);
                 }
             }
             if (state == GameStatus.NOT_STARTED && key == KeyEvent.VK_ENTER) {
                 state = GameStatus.RUNNING;
+                repaint();
             }
             if (state == GameStatus.GAME_OVER && key == KeyEvent.VK_ENTER) {
                 playerobj = new ArrayList<Player>();
@@ -343,9 +293,8 @@ class game extends JPanel {
                 eaten = 4;
                 food = new Food();
                 state = GameStatus.NOT_STARTED;
+                repaint();
             }
-
-            repaint();
         }
     }
 }
