@@ -82,7 +82,7 @@ class gameSpectate extends JPanel {
             for (Player player : playerobj.subList(0, eaten - 1)) {
                 g.fillRect(player.get_x(), player.get_y(), SIZE, SIZE);
             }
-            System.out.println("Length of snake: " + playerobj.size());
+//            System.out.println("Length of snake: " + playerobj.size());
             g.setColor(Color.RED);
             g.fillOval(food.get_x(), food.get_y(), SIZE, SIZE);
         } else if (state == GameStatus.GAME_OVER) {

@@ -210,7 +210,7 @@ class game extends JPanel {
             for (Player p : playerobj) {
                 g.fillRect(p.get_x(), p.get_y(), SIZE, SIZE);
             }
-            System.out.println("Length of snake: " + playerobj.size());
+//            System.out.println("Length of snake: " + playerobj.size());
 
             g.setColor(Color.RED);
             g.fillOval(food.get_x(), food.get_y(), SIZE, SIZE);
@@ -260,16 +260,16 @@ class game extends JPanel {
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
             if (state == GameStatus.RUNNING) {
-                if (key == KeyEvent.VK_LEFT && playerobj.get(0).get_direction() != DIRECTION.LEFT) {
+                if (key == KeyEvent.VK_LEFT && playerobj.get(0).get_direction() != DIRECTION.RIGHT) {
                     playerobj.get(0).set_direction(DIRECTION.LEFT);
                 }
-                if (key == KeyEvent.VK_RIGHT && playerobj.get(0).get_direction() != DIRECTION.RIGHT) {
+                if (key == KeyEvent.VK_RIGHT && playerobj.get(0).get_direction() != DIRECTION.LEFT) {
                     playerobj.get(0).set_direction(DIRECTION.RIGHT);
                 }
-                if (key == KeyEvent.VK_UP && playerobj.get(0).get_direction() != DIRECTION.UP) {
+                if (key == KeyEvent.VK_UP && playerobj.get(0).get_direction() != DIRECTION.DOWN) {
                     playerobj.get(0).set_direction(DIRECTION.UP);
                 }
-                if (key == KeyEvent.VK_DOWN && playerobj.get(0).get_direction() != DIRECTION.DOWN) {
+                if (key == KeyEvent.VK_DOWN && playerobj.get(0).get_direction() != DIRECTION.UP) {
                     playerobj.get(0).set_direction(DIRECTION.DOWN);
                 }
             }
