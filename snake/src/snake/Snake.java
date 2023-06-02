@@ -110,22 +110,14 @@ class initial_move extends Thread {
 
     public void run() {
         switch(direction){
-            case UP -> {
+            case UP ->
                 this.p.get(0).move_y(-SIZE);
-                break;
-            }
-            case DOWN -> {
+            case DOWN ->
                 this.p.get(0).move_y(SIZE);
-                break;
-            }
-            case LEFT -> {
+            case LEFT ->
                 this.p.get(0).move_x(-SIZE);
-                break;
-            }
-            case RIGHT -> {
+            case RIGHT ->
                 this.p.get(0).move_x(SIZE);
-                break;
-            }
         }
     }
 }
@@ -191,7 +183,7 @@ class game extends JPanel {
         }
         //게임 진행중
         else if (state == GameStatus.RUNNING) {
-            g.drawString("Eaten: " + Integer.toString(eaten - 4), 10, 30);
+            g.drawString("Eaten: " + (eaten - 4), 10, 30);
             Thread R1 = new Thread(new initial_move(playerobj, playerobj.get(0).get_direction()));
             R1.start();
             for (int i = eaten - 1; i > 0; i--) {

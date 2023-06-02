@@ -5,7 +5,6 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import static snake.Snake.SIZE;
 
@@ -77,7 +76,7 @@ class gameSpectate extends JPanel {
         }
         //게임 진행중
         else if (state == GameStatus.RUNNING) {
-            g.drawString("Eaten: " + Integer.toString(eaten - 4), 10, 30);
+            g.drawString("Eaten: " + (eaten - 4), 10, 30);
             g.drawRect(0, 0, Snake.WIDTH * SIZE, Snake.HEIGHT * SIZE);
             g.setColor(Color.BLUE);
             for (Player player : playerobj.subList(0, eaten - 1)) {
